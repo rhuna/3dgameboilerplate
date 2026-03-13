@@ -1,0 +1,20 @@
+[project]
+name = "simforge-boilerplate"
+version = "0.1.0"
+description = "Reusable Panda3D + NumPy simulation/game boilerplate"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

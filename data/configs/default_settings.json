@@ -1,0 +1,23 @@
+{
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "title": "SimForge Boilerplate",
+    "fullscreen": false
+  },
+  "simulation": {
+    "sim_hz": 30,
+    "max_frame_time": 0.25,
+    "default_steps_headless": 300,
+    "initial_agents": 25,
+    "world_size": 64,
+    "random_seed": 7
+  },
+  "camera": {
+    "move_speed": 20.0,
+    "zoom_speed": 5.0,
+    "rotation_sensitivity": 0.2,
+    "start_pos": [0.0, -40.0, 25.0],
+    "look_at": [0.0, 0.0, 0.0]
+  }
+}

@@ -1,0 +1,30 @@
+{
+    "name": "fire_lab",
+    "description": "Small free-play sandbox for testing core systems.",
+    "game_mode": "sandbox",
+    "simulation": {
+        "world_size": 1000,
+        "initial_agents": 100,
+        "random_seed": 9
+    },
+    "environment": {
+        "weather": "fire",
+        "temperature_base": 0.8
+    },
+    "resources": {
+        "mana": 100,
+        "wood": 0,
+        "fire": 50,
+        "water": 0,
+        "earth": 0,
+        "air": 0
+    },
+    "camera": {
+        "x": 20.0,
+        "y": -30.0,
+        "z": 25.0,
+        "look_at_x": 30.0,
+        "look_at_y": 30.0,
+        "look_at_z": 0.0
+    }
+}

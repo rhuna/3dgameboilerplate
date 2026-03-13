@@ -1,0 +1,26 @@
+{
+  "name": "ember_trial",
+  "description": "Small adventure slice with one player and a couple of enemies.",
+  "game_mode": "adventure",
+  "simulation": {
+    "world_size": 40,
+    "initial_agents": 0,
+    "random_seed": 7
+  },
+  "environment": {
+    "weather": "clear",
+    "temperature_base": 0.25
+  },
+  "resources": {
+    "mana": 100,
+    "wood": 25
+  },
+  "camera": {
+    "x": 20.0,
+    "y": 6.0,
+    "z": 10.0,
+    "look_at_x": 20.0,
+    "look_at_y": 20.0,
+    "look_at_z": 1.0
+  }
+}

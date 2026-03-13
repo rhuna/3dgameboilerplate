@@ -1,0 +1,26 @@
+{
+    "name": "sandbox_small",
+    "description": "Small free-play sandbox for testing core systems.",
+    "game_mode": "sandbox",
+    "simulation": {
+        "world_size": 40,
+        "initial_agents": 12,
+        "random_seed": 7
+    },
+    "environment": {
+        "weather": "clear",
+        "temperature_base": 0.25
+    },
+    "resources": {
+        "mana": 100,
+        "wood": 50
+    },
+    "camera": {
+        "x": 20.0,
+        "y": -30.0,
+        "z": 25.0,
+        "look_at_x": 20.0,
+        "look_at_y": 20.0,
+        "look_at_z": 0.0
+    }
+}

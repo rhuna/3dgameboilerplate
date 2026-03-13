@@ -1,0 +1,30 @@
+{
+    "name": "village_attack",
+    "description": "Small free-play sandbox for testing core systems.",
+    "game_mode": "sandbox",
+    "simulation": {
+        "world_size": 40,
+        "initial_agents": 12,
+        "random_seed": 15
+    },
+    "environment": {
+        "weather": "rain",
+        "temperature_base": 0.15
+    },
+    "resources": {
+        "mana": 100,
+        "wood": 50,
+        "fire": 50,
+        "water": 75,
+        "earth": 60,
+        "air": 40
+    },
+    "camera": {
+        "x": 20.0,
+        "y": -50.0,
+        "z": 50.0,
+        "look_at_x": 30.0,
+        "look_at_y": 60.0,
+        "look_at_z": 0.0
+    }
+}
