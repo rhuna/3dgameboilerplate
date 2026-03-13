@@ -6,8 +6,10 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from game.gameplay.commands import MovePlayerCommand
 from game.definitions.registry import ContentRegistry
+from sim import ecs
 from sim.analysis.exporters import export_metrics_csv, export_metrics_json
 from sim.clock import SimulationClock
+from sim.components import movement
 from sim.components.agent_tag import AgentTag
 from sim.components.ai_state import AIState
 from sim.components.combat_stats import CombatStats
@@ -33,6 +35,7 @@ from sim.scheduler import SystemScheduler
 from sim.state import WorldState
 from sim.system_installers import install_core_systems, install_game_systems
 from sim.analysis.recorder import MetricsRecorder
+from tests.test_ecs_stability import Position
 
 
 class World:
@@ -87,6 +90,8 @@ class World:
     @property
     def temperatures(self):
         return self.state.temperature
+    
+    
 
     def reset(self) -> None:
         self.rng = random.Random(self.settings.simulation.random_seed)
@@ -116,9 +121,8 @@ class World:
             fire_wizards = total_agents // 2
             villagers = total_agents - fire_wizards
 
-            next_entity_id = 0
-            next_entity_id = self._spawn_archetype("fire_wizard", fire_wizards, next_entity_id)
-            next_entity_id = self._spawn_archetype("villager", villagers, next_entity_id)
+            self._spawn_archetype("fire_wizard", fire_wizards)
+            self._spawn_archetype("villager", villagers)
 
         self.metrics_system.update(self)
 
@@ -137,7 +141,6 @@ class World:
 
         if self.event_bus is not None:
             self.event_bus.emit("simulation_reset", reset_payload)
-
     def _spawn_adventure_defaults(self) -> None:
         self.event_bus.emit("message", {"text": "Welcome to the adventure! Prepare to face the Ash Crawlers lurking in the fiery depths."})
         self.spawn_player(archetype="player_fire_wizard", x=self.world_size * 0.5, y=self.world_size * 0.5)
@@ -158,7 +161,13 @@ class World:
             self.ecs.components.add(entity_id, Mana(current=float(data.get("mana", 0.0)), maximum=float(data.get("mana", 0.0))))
             self.ecs.components.add(entity_id, Faction(name=str(data.get("faction", "neutral"))))
             self.ecs.components.add(entity_id, AgentTag(archetype=archetype, role=str(data.get("role", "npc")), state=str(data.get("state", "idle"))))
-            self.ecs.components.add(entity_id, Renderable(model_name=str(data.get("model", "agent_default")), color=tuple(data.get("color", (1.0, 1.0, 1.0, 1.0)))))
+            self.ecs.components.add(
+                entity_id,
+                Renderable(
+                    model_name=archetype["model"],
+                    color=archetype["color"]
+                ),
+            )
             self.ecs.components.add(entity_id, TemperatureEmitter(amount=0.01))
 
     def _spawn_actor(self, *, archetype: str, x: float, y: float, role_override: str | None = None, is_player: bool = False, is_enemy: bool = False) -> int:
@@ -178,7 +187,13 @@ class World:
         tag = AgentTag(archetype=archetype, role=role, state=str(data.get("state", "idle")))
         tag.move_speed = speed_value
         self.ecs.components.add(entity_id, tag)
-        self.ecs.components.add(entity_id, Renderable(model_name=str(data.get("model", "agent_default")), color=tuple(data.get("color", (1.0, 1.0, 1.0, 1.0)))))
+        self.ecs.components.add(
+            entity_id,
+            Renderable(
+                model_name=archetype["model"],
+                color=archetype["color"]
+            )
+        )
         self.ecs.components.add(entity_id, TemperatureEmitter(amount=0.01))
         self.ecs.components.add(entity_id, Cooldowns())
         self.ecs.components.add(entity_id, CombatStats())
@@ -242,6 +257,77 @@ class World:
         self.replay.record_event(self.step_count, "entity_spawned", spawn_payload)
         if self.event_bus is not None:
             self.event_bus.emit("entity_spawned", spawn_payload)
+        return entity_id
+
+    def _spawn_archetype(self, archetype_name: str, count: int) -> None:
+        for _ in range(count):
+            x = self.rng.uniform(0.0, float(self.world_size - 1))
+            y = self.rng.uniform(0.0, float(self.world_size - 1))
+            self.spawn_agent(archetype_name, x=x, y=y)
+
+
+    def spawn_agent(self, archetype_name: str, x: float, y: float) -> int:
+        entity_id = self.ecs.create_entity()
+        data = self.content.get_agent(archetype_name)
+
+        target_x = self.rng.uniform(0, self.world_size - 1)
+        target_y = self.rng.uniform(0, self.world_size - 1)
+
+        self.ecs.components.add(entity_id, Transform(x=x, y=y, z=0.25))
+        self.ecs.components.add(
+            entity_id,
+            Movement(
+                speed=float(data.get("speed", 3.0)),
+                target_x=target_x,
+                target_y=target_y,
+            ),
+        )
+        self.ecs.components.add(
+            entity_id,
+            Health(
+                current=float(data.get("health", 100.0)),
+                maximum=float(data.get("health", 100.0)),
+            ),
+        )
+        self.ecs.components.add(
+            entity_id,
+            Mana(
+                current=float(data.get("mana", 0.0)),
+                maximum=float(data.get("mana", 0.0)),
+            ),
+        )
+        self.ecs.components.add(
+            entity_id,
+            Faction(name=str(data.get("faction", "neutral"))),
+        )
+        self.ecs.components.add(
+            entity_id,
+            AgentTag(
+                archetype=archetype_name,
+                role=str(data.get("role", "npc")),
+                state=str(data.get("state", "idle")),
+            ),
+        )
+        self.ecs.components.add(
+            entity_id,
+            Renderable(
+                model_name=str(data.get("model", "agent_default")),
+                color=tuple(data.get("color", (1.0, 1.0, 1.0, 1.0))),
+            ),
+        )
+        self.ecs.components.add(entity_id, TemperatureEmitter(amount=0.01))
+
+        spawn_payload = {
+            "entity_id": entity_id,
+            "archetype": archetype_name,
+            "role": str(data.get("role", "npc")),
+        }
+
+        self.replay.record_event(self.step_count, "entity_spawned", spawn_payload)
+
+        if self.event_bus is not None:
+            self.event_bus.emit("entity_spawned", spawn_payload)
+
         return entity_id
 
     def spawn_enemy(self, *, x: float, y: float, archetype: str = "ash_crawler") -> int:
@@ -424,6 +510,53 @@ class World:
         self.record_command(command_type=command.__class__.__name__, payload=payload)
         self._apply_command(command)
 
+
+    @property
+    def entities(self):
+        entity_manager = self.ecs.entities
+    
+        if hasattr(entity_manager, "_alive"):
+            return entity_manager._alive
+    
+        if hasattr(entity_manager, "alive"):
+            return entity_manager.alive
+    
+        if hasattr(entity_manager, "_entities"):
+            return entity_manager._entities
+    
+        if hasattr(entity_manager, "entities"):
+            return entity_manager.entities
+    
+        raise AttributeError("Could not find iterable entity set on EntityManager")
+
+
+    def create_entity(self) -> int:
+        return self.ecs.create_entity()
+
+
+    def destroy_entity(self, entity_id: int) -> None:
+        self.ecs.destroy_entity(entity_id)
+
+
+    def add_component(self, entity_id: int, component: object) -> None:
+        self.ecs.add_component(entity_id, component)
+
+
+    def remove_component(self, entity_id: int, component_type: type) -> None:
+        self.ecs.remove_component(entity_id, component_type)
+
+
+    def get_component(self, entity_id: int, component_type: type):
+        return self.ecs.get_component(entity_id, component_type)
+
+
+    def has_component(self, entity_id: int, component_type: type) -> bool:
+        return self.ecs.has_component(entity_id, component_type)
+
+
+    def query(self, *component_types: type):
+        return self.ecs.query_iter(*component_types)
+
     def _apply_command(self, command: object) -> None:
         if isinstance(command, MovePlayerCommand):
             player_id = self.find_player_id()
@@ -440,13 +573,15 @@ class World:
             dir_x = command.move_x / length
             dir_y = command.move_y / length
             target_distance = max(1.0, movement.speed * self.fixed_dt * 6.0)
+            entity_radius = 0.5
+
             movement.target_x = max(
-                0.0,
-                min(self.world_size - 1, transform.x + dir_x * target_distance),
+                entity_radius,
+                min(self.world_size - entity_radius, transform.x + dir_x * target_distance),
             )
             movement.target_y = max(
-                0.0,
-                min(self.world_size - 1, transform.y + dir_y * target_distance),
+                entity_radius,
+                min(self.world_size - entity_radius, transform.y + dir_y * target_distance),
             )
             return
 

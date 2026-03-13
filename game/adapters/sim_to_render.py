@@ -1,5 +1,7 @@
 from __future__ import annotations
+from xml.parsers.expat import model
 
+from mypyc import transform
 from panda3d.core import CardMaker, NodePath
 
 from sim.components.renderable import Renderable
@@ -41,13 +43,13 @@ class SimToRenderAdapter:
             transform = ecs.components.get_required(entity_id, Transform)
             renderable = ecs.components.get_required(entity_id, Renderable)
 
-            model = self.asset_loader.load_model(renderable.model_name, parent=self.root_np)
+            model = self.asset_loader.create_instance(renderable.model_name, self.root_np)
             if model is None:
                 continue
 
-            model.setScale(0.25)
+            model.setScale(1.0)
             model.setColor(*renderable.color)
-            model.setPos(transform.x, transform.y, transform.z)
+            model.setPos(transform.x, transform.y, transform.z + 0.5)
             self.entity_nodes[entity_id] = model
 
     def sync(self) -> None:

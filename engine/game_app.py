@@ -9,7 +9,6 @@ from engine.asset_loader import AssetLoader
 from engine.camera import CameraController
 from engine.debug_overlay import DebugOverlay
 from engine.input import InputState
-from engine.scene import SceneBuilder
 from sim.world import World
 import time
 from sim.components.agent_tag import AgentTag
@@ -59,7 +58,7 @@ class SimulationGameApp(ShowBase):
             self.command_adapter = InputToCommandsAdapter(self.input_state)
             self.camera_controller = CameraController(self, settings.camera, self.input_state)
             self.debug_overlay = DebugOverlay(self)
-            self.fixed_dt = 1.0 / 20.0
+            self.fixed_dt = 1.0 / self.settings.simulation.sim_hz
             self.accumulator = 0.0
 
             self._configure_window()
@@ -115,17 +114,21 @@ class SimulationGameApp(ShowBase):
         if self.scenario is None:
             return
 
-        self.camera.setPos(
-            self.scenario.camera_x,
-            self.scenario.camera_y,
-            self.scenario.camera_z,
-        )
-        self.camera.lookAt(
-            self.scenario.look_at_x,
-            self.scenario.look_at_y,
-            self.scenario.look_at_z,
-        )
-
+        camera_data = getattr(self.scenario, "camera", None)
+        if not camera_data:
+            return
+    
+        x = float(camera_data.get("x", 20.0))
+        y = float(camera_data.get("y", -30.0))
+        z = float(camera_data.get("z", 25.0))
+    
+        look_at_x = float(camera_data.get("look_at_x", 20.0))
+        look_at_y = float(camera_data.get("look_at_y", 20.0))
+        look_at_z = float(camera_data.get("look_at_z", 0.0))
+    
+        self.camera.setPos(x, y, z)
+        self.camera.lookAt(look_at_x, look_at_y, look_at_z)
+    
     def load(self) -> None:
         self.scene = SimulationScene(self)
         self.scene.load()
@@ -226,21 +229,43 @@ class SimulationGameApp(ShowBase):
         dt = min(ClockObject.getGlobalClock().getDt(), 0.25)
         self.accumulator += dt
 
-        commands = self.command_adapter.get_commands()
-        for command in commands:
-            self.accumulator += dt
-
+        # Collect player input commands once per frame.
         commands = self.command_adapter.get_commands()
         for command in commands:
             self.world.issue_command(command)
-    
-        while self.accumulator >= self.fixed_dt:
-            self.world.tick()
-            self.accumulator -= self.fixed_dt
-    
+
+        sim_start = time.perf_counter()
+        steps_executed = 0
+
+        # Respect pause / single-step controls.
+        if self.input_state.paused:
+            if self.input_state.single_step_requested:
+                self.world.tick()
+                self.input_state.single_step_requested = False
+                steps_executed = 1
+                self.accumulator = 0.0
+        else:
+            scaled_dt = dt * self.input_state.sim_speed
+            self.accumulator = min(self.accumulator + (scaled_dt - dt), self.fixed_dt * 8.0)
+
+            while self.accumulator >= self.fixed_dt:
+                self.world.tick()
+                self.accumulator -= self.fixed_dt
+                steps_executed += 1
+
+        self.last_frame_dt = dt
+        self.last_sim_step_count = steps_executed
+        self.last_sim_step_time_ms = (time.perf_counter() - sim_start) * 1000.0
+
+        # Camera should update after simulation so it follows the latest world state.
         self.camera_controller.update(dt)
+
+        # Push ECS/sim state to render nodes.
         self.sim_renderer.sync()
-    
+
+        # Refresh debug text without relying on a missing overlay.update() API.
+        self._refresh_debug()
+
         return task.cont
 
     def _refresh_debug(self) -> None:

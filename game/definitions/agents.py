@@ -12,7 +12,7 @@ AGENT_ARCHETYPES = {
         "faction": "fire",
         "color": (1.0, 0.45, 0.1, 1.0),
         "state": "idle",
-        "model": "agent_default",
+        "model": "player_default",
     },
     "villager": {
         "health": 40.0,
@@ -32,34 +32,10 @@ AGENT_ARCHETYPES = {
         "faction": "ash",
         "color": (0.35, 0.35, 0.35, 1.0),
         "state": "idle",
-        "model": "agent_default",
+        "model": "enemy_default",
     },
 }
 
 
-def create_agent_from_archetype(
-    *,
-    agent_id: int,
-    archetype: str,
-    x: float,
-    y: float,
-    target_x: float,
-    target_y: float,
-) -> Agent:
-    data = AGENT_ARCHETYPES[archetype]
-
-    return Agent(
-        agent_id=agent_id,
-        archetype=archetype,
-        x=x,
-        y=y,
-        speed=float(data["speed"]),
-        target_x=target_x,
-        target_y=target_y,
-        role=str(data["role"]),
-        health=float(data["health"]),
-        mana=float(data["mana"]),
-        faction=str(data["faction"]),
-        state=str(data["state"]),
-        color=tuple(data["color"]),
-    )
+def get_archetype(name: str):
+    return AGENT_ARCHETYPES[name]

@@ -100,12 +100,19 @@ def build_context() -> BootstrapContext:
     services.register("scenario", scenario)
     services.register("settings", settings)
 
-    settings.simulation.world_size = scenario.world_size
-    settings.simulation.initial_agents = scenario.initial_agents
-    settings.simulation.random_seed = scenario.random_seed
-    settings.simulation.temperature_base = scenario.temperature_base
-    settings.simulation.weather = scenario.weather
+    # Apply scenario overrides to runtime settings.
+    if hasattr(scenario, "world_size"):
+        settings.simulation.world_size = scenario.world_size
+    if hasattr(scenario, "initial_agents"):
+        settings.simulation.initial_agents = scenario.initial_agents
+    if hasattr(scenario, "random_seed"):
+        settings.simulation.random_seed = scenario.random_seed
+    if hasattr(scenario, "temperature_base"):
+        settings.simulation.temperature_base = scenario.temperature_base
+    if hasattr(scenario, "weather"):
+        settings.simulation.weather = scenario.weather
 
+    # Explicit CLI seed override should win over scenario seed.
     if args.seed is not None:
         settings.simulation.random_seed = args.seed
 
