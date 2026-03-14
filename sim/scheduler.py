@@ -21,6 +21,10 @@ class SystemScheduler:
     def clear(self) -> None:
         self.systems.clear()
 
+    def names(self) -> list[str]:
+        return [getattr(system, "name", system.__class__.__name__) for system in self.systems]
+
+
     def run(self, world) -> None:
         for system in self.systems:
             system.update(world)

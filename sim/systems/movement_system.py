@@ -9,6 +9,7 @@ from sim.components.transform import Transform
 
 
 class MovementSystem:
+    name = "MovementSystem"
     def update(self, world) -> None:
         dt = world.fixed_dt
         world_size = float(world.world_size)
@@ -56,7 +57,7 @@ class MovementSystem:
             # NPC/enemy wandering fallback:
             # when they reach a target, pick a new nearby one.
             if remaining_dist <= 0.25:
-                jitter = 8.0
+                jitter = 1000
 
                 new_x = transform.x + world.rng.uniform(-jitter, jitter)
                 new_y = transform.y + world.rng.uniform(-jitter, jitter)

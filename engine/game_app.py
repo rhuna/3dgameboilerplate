@@ -55,7 +55,7 @@ class SimulationGameApp(ShowBase):
         
             
             self.input_state = InputState()
-            self.command_adapter = InputToCommandsAdapter(self.input_state)
+            self.command_adapter = InputToCommandsAdapter(self.input_state, self.world)
             self.camera_controller = CameraController(self, settings.camera, self.input_state)
             self.debug_overlay = DebugOverlay(self)
             self.fixed_dt = 1.0 / self.settings.simulation.sim_hz
@@ -85,26 +85,29 @@ class SimulationGameApp(ShowBase):
         entity_id = self.selected_agent_id
         if entity_id is None:
             return "Selected: None"
-
+    
         if entity_id not in self.world.ecs.entities.all_entities():
             return "Selected: Missing"
-
+    
         tag = self.world.ecs.components.get(entity_id, AgentTag)
         health = self.world.ecs.components.get(entity_id, Health)
         mana = self.world.ecs.components.get(entity_id, Mana)
         transform = self.world.ecs.components.get(entity_id, Transform)
-
+        spellbook = self.world.ecs.components.get(entity_id, Spellbook)
+    
         role = tag.role if tag is not None else "unknown"
         hp = health.current if health is not None else 0.0
         mp = mana.current if mana is not None else 0.0
         x = transform.x if transform is not None else 0.0
         y = transform.y if transform is not None else 0.0
-
+        spell = spellbook.selected_spell if spellbook is not None else "none"
+    
         return (
             f"Selected: id={entity_id} "
             f"role={role} "
             f"hp={hp:.1f} "
             f"mana={mp:.1f} "
+            f"spell={spell} "
             f"pos=({x:.1f}, {y:.1f})"
         )
 
@@ -148,11 +151,12 @@ class SimulationGameApp(ShowBase):
 
     def _configure_input(self) -> None:
         key_pairs = [
-            "w", "a", "s", "d", "q", "e",
+            "w", "a", "s", "d", "q", "e", "shift",
             "mouse1", "mouse3",
             "f1", "r", "space", "t",
             "wheel_up", "wheel_down",
-            "1", "2", "3", "4", "5", "6","f5", "f9",
+            "1", "2", "3", "4", "5", "6", "7", "8", "9",
+            "f5", "f9",
         ]
 
         for key in key_pairs:
@@ -190,18 +194,6 @@ class SimulationGameApp(ShowBase):
             return
         if key == "wheel_down":
             self.camera_controller.zoom(+1.0)
-            return
-        if key == "1":
-            self.input_state.sim_speed = 1.0
-            return
-        if key == "2":
-            self.input_state.sim_speed = 2.0
-            return
-        if key == "3":
-            self.input_state.sim_speed = 4.0
-            return
-        if key == "4":
-            self.input_state.sim_speed = 8.0
             return
         if key == "f5":
             self.world.save("data/saves/quicksave.json")
