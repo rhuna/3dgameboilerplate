@@ -393,8 +393,8 @@ class World:
         self.ecs.components.add(
             entity_id,
             Renderable(
-                model_name=str(data.get("model", "agent_default")),
-                color=tuple(data.get("color", (1.0, 1.0, 1.0, 1.0))),
+                model_name="player4",
+                color=tuple(data.get("color", (1.0, 0.45, 0.1, 1.0))),
             ),
         )
         self.ecs.components.add(entity_id, TemperatureEmitter(amount=0.01))

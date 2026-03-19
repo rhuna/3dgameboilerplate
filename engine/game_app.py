@@ -11,6 +11,7 @@ from engine.debug_overlay import DebugOverlay
 from engine.input import InputState
 from sim.world import World
 import time
+import simplepbr
 from sim.components.agent_tag import AgentTag
 from sim.components.health import Health
 from sim.components.mana import Mana
@@ -46,6 +47,10 @@ class SimulationGameApp(ShowBase):
 
             
             super().__init__()
+            try:
+                simplepbr.init()
+            except Exception as exc:
+                print(f"[Render] simplepbr not enabled: {exc}")
             self.asset_loader = AssetLoader(self.loader)
 
             if self.services is not None:

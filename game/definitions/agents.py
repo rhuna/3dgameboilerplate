@@ -12,7 +12,7 @@ AGENT_ARCHETYPES = {
         "faction": "fire",
         "color": (1.0, 0.45, 0.1, 1.0),
         "state": "idle",
-        "model": "player_default",
+        "model": "player9",
     },
     "villager": {
         "health": 40.0,

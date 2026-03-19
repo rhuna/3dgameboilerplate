@@ -1,0 +1,14 @@
+{
+    "id": "player9",
+    "model": "assets/models/characters/player9.glb",
+    "animated": true,
+    "default_animation": "",
+    "animations": {},
+    "scale": 1.0,
+    "position_offset": [0.0, 0.0, 0.0],
+    "hpr": [0.0, 0.0, 0.0],
+    "two_sided": false,
+    "allow_tint": false,
+    "use_shader_auto": true,
+    "no_cache": true
+}

@@ -3,8 +3,8 @@ from sim.systems.death_system import DeathSystem
 from sim.systems.environment_system import EnvironmentSystem
 from sim.systems.metrics_system import MetricsSystem
 from sim.systems.movement_system import MovementSystem
-from game.gameplay.enemy_ai_system import EnemyAISystem
-from game.gameplay.player_controller_system import PlayerControllerSystem
+from sim.systems.enemy_ai_system import EnemyAISystem
+from sim.systems.player_controller_system import PlayerControllerSystem
 
 
 def install_core_systems(world) -> None:
